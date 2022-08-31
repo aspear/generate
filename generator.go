@@ -136,6 +136,23 @@ func (g *Generator) processSchema(schemaName string, schema *Schema) (typ string
 		if schema.Reference != "" {
 			return g.processReference(schema)
 		}
+		// aspear added this:  in the case that there is usage of anyOf, allOf, or oneOf with only ONE entry, there is
+		// no point in generating an interface when you can clearly resolve the type directly and generate much more
+		// usable classes as a result.  Note that this does NOT handle the definition inline, but only when the types
+		// are used via references.  Not sure of the correct place to handle this to ensure that this is handled
+		// more portably
+		if len(schema.AllOf) == 1 && schema.AllOf[0].Reference != "" {
+			schema.Reference = schema.AllOf[0].Reference
+			return g.processReference(schema)
+		}
+		if len(schema.AnyOf) == 1 && schema.AnyOf[0].Reference != "" {
+			schema.Reference = schema.AnyOf[0].Reference
+			return g.processReference(schema)
+		}
+		if len(schema.OneOf) == 1 && schema.OneOf[0].Reference != "" {
+			schema.Reference = schema.OneOf[0].Reference
+			return g.processReference(schema)
+		}
 	}
 	return // return interface{}
 }
